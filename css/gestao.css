@@ -1,0 +1,164 @@
+
+        /* --- CONFIGURAÇÕES GERAIS DO PAINEL --- */
+        :root {
+            --gold: #d4af37;
+            --bg-color: #0a0a0a;
+            --card-bg: #161616;
+            --text-light: #ffffff;
+            --text-muted: #777777;
+            --border-color: #222222;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-light);
+            overflow-x: hidden;
+        }
+
+        /* --- BARRA DE NAVEGAÇÃO SUPERIOR --- */
+        .dash-navbar {
+            display: flex;
+            flex-direction: row !important; /* FORÇA A FICAR NA HORIZONTAL */
+            background-color: #111111;
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 20px;
+            align-items: center;
+            justify-content: space-between;
+            height: 80px; /* Fixa a altura do cabeçalho */
+        }
+
+        /* A logo do lado esquerdo (Mesmo estilo do cliente) */
+        .dash-logo {
+            flex: 1; 
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+        }
+
+        .dash-logo h1 {
+            margin: 0;
+            font-family: 'Playfair Display', serif; /* Fonte oficial do projeto */
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 1px;
+        }
+
+        .dash-logo h1 span {
+            color: var(--gold);
+        }
+
+        /* O container que segura os botões no centro */
+        .dash-tabs-container {
+            display: flex;
+            flex-direction: row !important; /* IMPEDE QUE CAIA PARA VERTICAL */
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        /* O fantasma do lado direito que equilibra a balança para centralizar */
+        .dash-spacer {
+            flex: 1; 
+        }
+
+        /* Os botões individuais */
+        .dash-tab {
+            display: flex;
+            flex-direction: column; /* Ícone em cima, texto em baixo */
+            align-items: center;
+            justify-content: center;
+            padding: 0 20px;
+            height: 80px; /* Ocupa a altura toda do menu */
+            cursor: pointer;
+            color: var(--text-muted);
+            transition: 0.3s;
+            border-bottom: 3px solid transparent;
+            gap: 6px;
+            white-space: nowrap; /* Impede o texto de quebrar linha */
+        }
+
+        .dash-tab i {
+            font-size: 1.2rem;
+        }
+
+        .dash-tab span {
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .dash-tab:hover {
+            color: #aaa;
+        }
+
+        /* Aba Selecionada (Ativa) */
+        .dash-tab.active {
+            color: var(--gold);
+            border-bottom-color: var(--gold);
+            background-color: #1a1a1a;
+        }
+
+        .dash-tab.btn-sair-dash:hover {
+            color: #ff4d4d;
+        }
+
+        /* --- CONTAINER DO CONTEÚDO CENTRAL --- */
+        .dash-content-wrapper {
+            padding: 30px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .aba-conteudo {
+            display: none; /* Esconde todas por padrão */
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            min-height: 500px;
+        }
+
+        /* Mostra apenas a aba ativa */
+        .aba-conteudo.active {
+            display: block; 
+        }
+
+        .aba-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #2a2a2a;
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+
+        .aba-header h2 {
+            color: var(--gold);
+            margin: 0;
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+        }
+
+        /* Filtros (Inputs e Selects) */
+        .aba-filtros {
+            display: flex;
+            gap: 15px;
+        }
+
+        .dash-input {
+            background-color: #0a0a0a;
+            border: 1px solid #333;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .dash-input:focus {
+            border-color: var(--gold);
+        }

@@ -73,10 +73,15 @@
 
         .nav-logo {
             font-family: 'Playfair Display', serif;
-            color: var(--gold);
-            font-size: 1.5rem;
+            font-size: 2rem; /* Ajuste o tamanho se precisar */
             font-weight: 700;
-            letter-spacing: 1.5px;
+            text-decoration: none;
+            color: #ffffff !important; /* ISSO DEIXA O 'BARBER' BRANCO */
+            letter-spacing: 1px;
+        }
+
+        .nav-logo span {
+            color: var(--gold) !important; /* ISSO DEIXA O 'FAST' DOURADO */
         }
 
         .nav-actions {

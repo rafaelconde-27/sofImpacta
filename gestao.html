@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BARBERFAST - Painel de Gestão</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/gestao.css">
+</head>
+<body>
+
+    <div class="dash-navbar"> 
+        <div class="dash-logo">
+            <h1>BARBER<span>FAST</span></h1>
+        </div>
+
+        <div class="dash-tabs-container">
+            <div class="dash-tab active" onclick="abrirAbaGestao('agenda', this)">
+                <i class="fa-solid fa-calendar-days"></i>
+                <span>Agenda</span>
+            </div>
+            <div class="dash-tab" onclick="abrirAbaGestao('acessos', this)">
+                <i class="fa-solid fa-lock"></i>
+                <span>Acessos</span>
+            </div>
+            <div class="dash-tab" onclick="abrirAbaGestao('assinaturas', this)">
+                <i class="fa-solid fa-gem"></i>
+                <span>Assinaturas</span>
+            </div>
+            <div class="dash-tab" onclick="abrirAbaGestao('equipe', this)">
+                <i class="fa-solid fa-users"></i>
+                <span>Equipe</span>
+            </div>
+            <div class="dash-tab" onclick="abrirAbaGestao('servicos', this)">
+                <i class="fa-solid fa-scissors"></i>
+                <span>Serviços</span>
+            </div>
+            <div class="dash-tab" onclick="abrirAbaGestao('configuracoes', this)">
+                <i class="fa-solid fa-gear"></i>
+                <span>Configurações</span>
+            </div>
+            <div class="dash-tab btn-sair-dash" onclick="sairDoSistema()">
+                <i class="fa-solid fa-right-from-bracket"></i>
+                <span>Sair do Sistema</span>
+            </div>
+        </div>
+        <div class="dash-spacer"></div>
+    </div>
+        
+        <div id="aba-agenda" class="aba-conteudo active">
+            <div class="aba-header">
+                <h2>Gestão de Agenda</h2>
+                <div class="aba-filtros">
+                    <input type="date" class="dash-input" id="filtro-data-agenda">
+                    <select class="dash-input">
+                        <option>Todos os barbeiros</option>
+                    </select>
+                </div>
+            </div>
+            <div class="aba-body">
+                <p style="color: var(--text-muted);">Nenhum agendamento para esta data.</p>
+            </div>
+        </div>
+
+        <div id="aba-acessos" class="aba-conteudo">
+            <div class="aba-header">
+                <h2>Controle de Acessos</h2>
+            </div>
+            <div class="aba-body">
+                <p style="color: var(--text-muted);">Módulo de criação de logins e níveis de permissão em construção.</p>
+            </div>
+        </div>
+
+        <div id="aba-assinaturas" class="aba-conteudo">
+            <div class="aba-header">
+                <h2>Gestão de Assinaturas</h2>
+            </div>
+            <div class="aba-body">
+                <p style="color: var(--text-muted);">Módulo de controle de assinantes em construção.</p>
+            </div>
+        </div>
+
+        <div id="aba-equipe" class="aba-conteudo">
+            <div class="aba-header">
+                <h2>Equipe</h2>
+            </div>
+            <div class="aba-body">
+                <p style="color: var(--text-muted);">Módulo de gestão de barbeiros em construção.</p>
+            </div>
+        </div>
+
+        <div id="aba-servicos" class="aba-conteudo">
+            <div class="aba-header">
+                <h2>Catálogo de Serviços</h2>
+            </div>
+            <div class="aba-body">
+                <p style="color: var(--text-muted);">Módulo de preços e tempo de serviços em construção.</p>
+            </div>
+        </div>
+
+        <div id="aba-configuracoes" class="aba-conteudo">
+            <div class="aba-header">
+                <h2>Configurações do Sistema</h2>
+            </div>
+            <div class="aba-body">
+                <p style="color: var(--text-muted);">Ajustes gerais da barbearia.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CHAMANDO FUNÇÕES -->
+    <script src="js/gestao.js"></script>
+</body>
+</html>

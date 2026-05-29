@@ -15,6 +15,57 @@
         const inputCadConfirmaSenha = document.getElementById('cad-confirma-senha');
         const btnCadastrar = document.getElementById('btn-cadastrar');
 
+        // --- LÓGICA DE LOGIN DO BARBEIRO (ATUALIZADA) ---
+        const btnEntrarBarbeiro = document.getElementById('btn-entrar-barbeiro');
+        const inputLoginBarbeiro = document.getElementById('login-barbeiro');
+        const inputSenhaBarbeiro = document.getElementById('senha-barbeiro');
+
+        if (btnEntrarBarbeiro) {
+            btnEntrarBarbeiro.addEventListener('click', async () => {
+                const loginValue = inputLoginBarbeiro.value.trim();
+                const senhaValue = inputSenhaBarbeiro.value;
+
+                if (!loginValue || !senhaValue) {
+                    mostrarToast("Preencha o login e a senha.", "aviso");
+                    return;
+                }
+
+                const btnOriginalText = btnEntrarBarbeiro.innerHTML;
+                btnEntrarBarbeiro.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Validando...';
+                btnEntrarBarbeiro.disabled = true;
+
+                try {
+                    // Consulta a tabela "barbeiro" buscando pela coluna "login"
+                    const { data, error } = await window.supabaseClient
+                        .from('barbeiro')
+                        .select('nome')
+                        .eq('login', loginValue)
+                        .eq('senha', senhaValue)
+                        .single();
+
+                    if (error || !data) {
+                        mostrarToast("Acesso negado. Credenciais inválidas.", "aviso");
+                    } else {
+                        // Login bem-sucedido! Redireciona direto para a nova página
+                        window.location.href = 'gestao.html';
+                    }
+                } catch (err) {
+                    console.error("Erro fatal no login de barbeiro:", err);
+                } finally {
+                    btnEntrarBarbeiro.innerHTML = btnOriginalText;
+                    btnEntrarBarbeiro.disabled = false;
+                }
+            });
+        }
+
+        // Função para sair da tela de gestão (Atualizada)
+        window.sairBarbearia = function() {
+            document.getElementById('tela-barbearia').style.display = 'none';
+            if (inputLoginBarbeiro) inputLoginBarbeiro.value = '';
+            if (inputSenhaBarbeiro) inputSenhaBarbeiro.value = '';
+            document.getElementById('selecao-perfil-modal').style.display = 'flex';
+        }
+        
         // --- MÁSCARA PARA O TELEFONE ---
         if (inputTelefone) {
             inputTelefone.addEventListener('input', function (e) {
@@ -32,45 +83,48 @@
 
         // --- LÓGICA DO BOTÃO DE ENTRAR ---
         if (btnEntrar) {
-            btnEntrar.addEventListener('click', async () => {
-                const telefoneValue = inputTelefone.value;
+            window.fazerLoginCliente = async function() {
+                const inputTelefone = document.getElementById('telefone-login');
+                const btnEntrar = document.getElementById('btn-entrar');
                 
-                if (telefoneValue.length >= 14) {
-                    const btnOriginalText = btnEntrar.innerHTML;
-                    btnEntrar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Verificando...';
-                    btnEntrar.disabled = true;
-
-                    try {
-                        const { data, error } = await window.supabaseClient
-                            .from('clientes')
-                            .select('id, celular')
-                            .eq('celular', telefoneValue)
-                            .single(); 
-
-                        if (error && error.code === 'PGRST116') {
-                            console.log("Usuário não cadastrado. Abrindo tela de cadastro...");
-                            modalLogin.style.display = 'none';
-                            modalCadastro.style.display = 'flex';
-                            inputCadTelefone.value = telefoneValue; 
-                        } else if (data) {
-                            console.log("Usuário encontrado! Abrindo tela de senha...");
-                            modalLogin.style.display = 'none';
-                            modalSenha.style.display = 'flex';
-                        } else if (error) {
-                            console.error("Erro no banco de dados:", error);
-                            alert("Erro ao verificar o banco de dados. Verifique a segurança (RLS) no Supabase.");
-                        }
-                    } catch (err) {
-                        console.error("Erro fatal na requisição:", err);
-                    } finally {
-                        btnEntrar.innerHTML = btnOriginalText;
-                        btnEntrar.disabled = false;
-                    }
-                    
-                } else {
-                    alert('Por favor, insira um número de celular válido com DDD.');
+                if (!inputTelefone || inputTelefone.value.trim() === '') {
+                    if (typeof mostrarToast === "function") mostrarToast('Por favor, digite seu número de celular.', 'aviso');
+                    else alert('Por favor, digite seu número de celular.');
+                    return;
                 }
-            });
+
+                const telefone = inputTelefone.value.trim();
+                const textoOriginal = btnEntrar.innerHTML;
+                
+                btnEntrar.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando...';
+                btnEntrar.disabled = true;
+
+                try {
+                    // Apenas verifica se o cliente existe
+                    const { data, error } = await window.supabaseClient
+                        .from('clientes')
+                        .select('nome')
+                        .eq('celular', telefone)
+                        .single();
+
+                    if (error || !data) {
+                        if (typeof mostrarToast === "function") mostrarToast('Número não encontrado. Verifique se digitou corretamente.', 'aviso');
+                        else alert('Número não encontrado.');
+                    } else {
+                        // SUCESSO: O usuário existe! 
+                        // Esconde a tela do telefone e ABRE A TELA DE SENHA
+                        console.log("Usuário encontrado! Abrindo tela de senha...");
+                        document.getElementById('login-modal').style.display = 'none';
+                        const modalSenha = document.getElementById('senha-modal');
+                        if (modalSenha) modalSenha.style.display = 'flex';
+                    }
+                } catch (err) {
+                    console.error("Erro fatal no login:", err);
+                } finally {
+                    btnEntrar.innerHTML = textoOriginal;
+                    btnEntrar.disabled = false;
+                }
+            };
         }
 
         // --- LÓGICA DO BOTÃO DE CADASTRAR ---
@@ -220,6 +274,35 @@
             });
         }
 
+        // --- PERMITIR "ENTER" NO LOGIN DE GESTÃO (BARBEIRO) ---
+        const inputLoginGestao = document.getElementById('login-barbeiro');
+        const inputSenhaGestao = document.getElementById('senha-barbeiro');
+        const btnAcessarGestao = document.getElementById('btn-entrar-barbeiro');
+
+        if (btnAcessarGestao) {
+            // Se apertar Enter enquanto digita o Login
+            if (inputLoginGestao) {
+                inputLoginGestao.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter' || event.keyCode === 13) {
+                        event.preventDefault();
+                        console.log("Enter detetado no Login de Gestão!");
+                        btnAcessarGestao.click();
+                    }
+                });
+            }
+            
+            // Se apertar Enter enquanto digita a Senha
+            if (inputSenhaGestao) {
+                inputSenhaGestao.addEventListener('keydown', function(event) {
+                    if (event.key === 'Enter' || event.keyCode === 13) {
+                        event.preventDefault();
+                        console.log("Enter detetado na Senha de Gestão!");
+                        btnAcessarGestao.click();
+                    }
+                });
+            }
+        }
+
        // --- PERMITIR "ENTER" PARA AVANÇAR NOS MODAIS ---
         // Enter no campo de Telefone (Tela 1)
         if (inputTelefone && btnEntrar) {
@@ -258,3 +341,4 @@
                 }
             });
         }
+

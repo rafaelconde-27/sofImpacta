@@ -410,4 +410,51 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        
+        /* --- NOTIFICAÇÕES (TOAST) --- */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            background-color: #1e1e1e;
+            border-left: 4px solid var(--gold);
+            color: #fff;
+            padding: 15px 20px;
+            border-radius: 6px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 250px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            /* Começa fora da tela à direita */
+            transform: translateX(120%);
+            opacity: 0;
+            /* Efeito de mola (bounce) na transição */
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55); 
+        }
+
+        .toast.show {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast i {
+            font-size: 1.2rem;
+            color: var(--gold);
+        }
+
+        /* Variação para mensagens de alerta (Laranja) */
+        .toast.toast-warning {
+            border-left-color: #ff9800;
+        }
+        .toast.toast-warning i {
+            color: #ff9800;
+        }

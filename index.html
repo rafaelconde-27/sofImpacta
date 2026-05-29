@@ -10,19 +10,73 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/login.css">
+    <link rel="stylesheet" href="css/barber.css">
 </head>
 <body>
-    <!-- MODAL DE LOGIN -->
-    <div id="login-modal" class="modal-overlay">
+    <!-- DIV CLIENTE/BARBEIRO -->
+    <div id="selecao-perfil-modal" class="modal-overlay">
+        <div class="login-box card" style="max-width: 450px; padding: 40px 30px;">
+            <div class="logos-container">
+                <div class="logo-box">
+                    <h2 style="color: var(--gold); margin: 0; font-family: 'Playfair Display', serif; font-size: 1.8rem;">Guapo</h2>
+                    <span style="color: var(--text-muted); font-size: 0.6rem; letter-spacing: 2px;">THE BARBER</span>
+                </div>
+                <div class="divider">
+                    <span class="x-mark">×</span>
+                </div>
+                <div class="logo-box">
+                    <h2 style="color: var(--gold); margin: 0; font-family: 'Inter', sans-serif; font-size: 1.8rem;">Barber</h2>
+                    <span style="color: var(--text-muted); font-size: 0.6rem; letter-spacing: 2px;">FAST</span>
+                </div>
+            </div>
+            
+            <p style="text-align: center; color: var(--text-light); margin-bottom: 25px; font-size: 0.95rem;">
+                Selecione seu perfil de acesso para continuar.
+            </p>
+            
+            <button id="btn-sou-cliente" class="btn-gold" style="width: 100%; margin-bottom: 15px; padding: 15px; position: relative; z-index: 10; cursor: pointer;">
+                <i class="fa-solid fa-user"></i> Sou Cliente
+            </button>
+
+            <button id="btn-sou-barbeiro" class="btn-dark-outline" style="width: 100%; padding: 15px; position: relative; z-index: 10; cursor: pointer;">
+                <i class="fa-solid fa-scissors"></i> Sou Barbeiro
+            </button>
+        </div>
+    </div>
+
+    <div id="login-modal" class="modal-overlay" style="display: none;">
         <div class="login-box card">
-        <h2 style="justify-content: center; margin-bottom: 10px;"><i class="fa-solid fa-user-lock"></i> Acesso</h2>            <p style="text-align: center; color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem;">
+            <button class="btn-back" onclick="voltarParaSelecao()">← Voltar</button>
+            <h2 style="justify-content: center; margin-bottom: 10px;"><i class="fa-solid fa-user-lock"></i> Acesso</h2>            
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem;">
                 Digite seu número de celular para acessar e agendar seu horário.
             </p>
             
             <div class="input-group">
                 <input type="tel" id="telefone-login" placeholder="(11) 90000-0000" maxlength="15">
             </div>
-            <button id="btn-entrar" class="btn-gold" style="width: 100%; margin-top: 20px;">Entrar</button>
+        <button id="btn-entrar" class="btn-gold" onclick="fazerLoginCliente()" style="width: 100%; margin-top: 20px;">Entrar</button>        </div>
+    </div>
+
+    <div id="login-barbeiro-modal" class="modal-overlay" style="display: none;">
+        <div class="login-box card">
+            <button class="btn-back" onclick="voltarParaSelecao()">← Voltar</button>
+            <h2 style="justify-content: center; margin-bottom: 10px; margin-top: 20px;"><i class="fa-solid fa-scissors"></i> Gestão</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem;">
+                Acesso exclusivo para equipe COSQ.
+            </p>
+            
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label>Login</label>
+                <input type="text" id="login-barbeiro" placeholder="Seu usuário de acesso">
+            </div>
+            
+            <div class="input-group">
+                <label>Senha</label>
+                <input type="password" id="senha-barbeiro" placeholder="Sua senha">
+            </div>
+            
+            <button id="btn-entrar-barbeiro" class="btn-gold" style="width: 100%; margin-top: 20px;">Acessar Sistema</button>
         </div>
     </div>
 
@@ -79,93 +133,151 @@
             <button id="btn-cadastrar" class="btn-gold" style="width: 100%; margin-top: 20px;"><i class="fa-solid fa-floppy-disk"></i> Cadastrar e Continuar</button>
         </div>
     </div>
-    <!-- MENU SUPERIOR -->
-    <nav class="top-navbar">
-        <div class="nav-logo">
-            BARBERFAST
+
+    <!-- MODAL DE PERFIL -->
+    <div id="perfil-modal" class="modal-overlay" style="display: none;">
+        <div class="login-box card" style="max-height: 90vh; overflow-y: auto;">
+            <button class="btn-back" onclick="fecharPerfil()">← Voltar</button>
+            <h2 style="justify-content: center; margin-bottom: 10px; margin-top: 20px;"><i class="fa-solid fa-user-pen"></i> Meu Perfil</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 25px; font-size: 0.9rem;">
+                Visualize e atualize suas informações.
+            </p>
+
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label for="perfil-nome">Nome completo</label>
+                <input type="text" id="perfil-nome" placeholder="Seu nome">
+            </div>
+
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label for="perfil-telefone">Telefone (Login)</label>
+                <input type="tel" id="perfil-telefone" readonly style="background-color: #2a2a2a; color: var(--text-muted); cursor: not-allowed;" title="Não é possível alterar o número de login por aqui.">
+            </div>
+
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label for="perfil-email">E-mail</label>
+                <input type="email" id="perfil-email" placeholder="seu@email.com">
+            </div>
+
+            <button id="btn-salvar-perfil" class="btn-gold" style="width: 100%; margin-top: 20px;"><i class="fa-solid fa-check"></i> Salvar Alterações</button>
         </div>
-        <div class="nav-actions">
-            <button class="btn-nav btn-gold-nav"><i class="fa-solid fa-user"></i> Área do Cliente</button>
-            <div class="user-menu-container">
-                <button class="btn-nav btn-white" id="btn-toggle-dropdown">Entrar / Registrar</button>            
-                <div id="dropdown-menu" class="dropdown-content">
-                    <div class="dropdown-header">
-                        <span id="dropdown-nome">Rafael Conde</span>
-                        <span id="dropdown-telefone">(11) 90000-0000</span>
+    </div>
+        
+        <!-- MODAL DE PAGAMENTO -->
+        <div id="pagamento-modal" class="modal-overlay" style="display: none;">
+        <div class="login-box card" style="max-height: 90vh; overflow-y: auto;">
+            <button class="btn-back" onclick="fecharPagamento()">← Voltar</button>
+            <h2 style="justify-content: center; margin-bottom: 10px; margin-top: 20px;"><i class="fa-solid fa-credit-card"></i> Pagamento</h2>
+            
+            <div style="background-color: #151515; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center; border: 1px dashed var(--gold);">
+                <span style="color: var(--text-muted); font-size: 0.9rem;">Você está assinando:</span><br>
+                <strong style="color: var(--gold); font-size: 1.2rem;" id="pagamento-plano-nome">Plano</strong><br>
+                <span style="font-size: 1.5rem; font-weight: bold;" id="pagamento-valor">R$ 0,00</span>
+            </div>
+
+            <p style="text-align: center; color: var(--whatsapp-green); font-size: 0.8rem; margin-bottom: 15px;">
+                <i class="fa-solid fa-flask"></i> Ambiente Sandbox (Teste). Nenhuma cobrança real será feita.
+            </p>
+
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label>Número do Cartão Fictício</label>
+                <input type="text" placeholder="0000 0000 0000 0000" value="4111 1111 1111 1111">
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div class="input-group" style="flex: 1;">
+                    <label>Validade</label>
+                    <input type="text" placeholder="MM/AA" value="12/30">
+                </div>
+                <div class="input-group" style="flex: 1;">
+                    <label>CVV</label>
+                    <input type="text" placeholder="123" value="123">
+                </div>
+            </div>
+
+            <button id="btn-confirmar-pagamento" class="btn-gold" style="width: 100%;"><i class="fa-solid fa-lock"></i> Confirmar Assinatura</button>
+        </div>
+    </div>
+    
+
+        <!-- MENU SUPERIOR -->
+        <nav class="top-navbar">
+            <a href="#" class="nav-logo">BARBER<span>FAST</span></a>
+            <div class="nav-actions">
+                <div class="user-menu-container">
+                    <button class="btn-nav btn-white" id="btn-toggle-dropdown">Entrar / Registrar</button>            
+                    <div id="dropdown-menu" class="dropdown-content">
+                        <div class="dropdown-header">
+                            <span id="dropdown-nome">Rafael Conde</span>
+                            <span id="dropdown-telefone">(11) 90000-0000</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" id="btn-abrir-perfil"><i class="fa-solid fa-user"></i> Perfil</a> 
+                        <a href="#" id="btn-abrir-assinaturas"><i class="fa-solid fa-file-signature"></i> Assinaturas</a>                    <a href="#"><i class="fa-solid fa-calendar-check"></i> Agendamentos</a>
+                        <a href="#"><i class="fa-solid fa-bell"></i> Notificações</a>
+                        <div class="dropdown-divider"></div>
+                        <a href="#" id="btn-sair" style="color: #ff4d4d;"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
                     </div>
-                    <div class="dropdown-divider"></div>
-                    <a href="#"><i class="fa-solid fa-user"></i> Perfil</a>
-                    <a href="#"><i class="fa-solid fa-file-signature"></i> Assinaturas</a>
-                    <a href="#"><i class="fa-solid fa-calendar-check"></i> Agendamentos</a>
-                    <a href="#"><i class="fa-solid fa-bell"></i> Notificações</a>
-                    <div class="dropdown-divider"></div>
-                    <a href="#" id="btn-sair" style="color: #ff4d4d;"><i class="fa-solid fa-right-from-bracket"></i> Sair</a>
                 </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <!-- TELA INICIAL -->
-    <div class="container">  
-        <header class="hero">
-            <h3 style="margin-bottom: 10px; letter-spacing: 2px;">BEM-VINDO À</h3>
-            <h1>Guapo The Barber</h1>
-            <p>A sua melhor experiência de barbearia clássica e moderna no ABC Paulista. Agende seu horário, relaxe e deixe o estilo por nossa conta.</p>
-            <button class="btn-gold" onclick="alert('Sistema de agendamento em breve!')"><i class="fa-solid fa-scissors"></i> QUERO AGENDAR!</button>
-        </header>
+        <!-- TELA INICIAL -->
+        <div class="container">  
+            <header class="hero">
+                <h3 style="margin-bottom: 10px; letter-spacing: 2px;">BEM-VINDO À</h3>
+                <h1>Guapo The Barber</h1>
+                <p>A sua melhor experiência de barbearia clássica e moderna no ABC Paulista. Agende seu horário, relaxe e deixe o estilo por nossa conta.</p>
+                <button class="btn-gold" onclick="alert('Sistema de agendamento em breve!')"><i class="fa-solid fa-scissors"></i> QUERO AGENDAR!</button>
+            </header>
 
-        <section class="grid-2">      
-            <div class="card">
-                <h2><i class="fa-solid fa-clock"></i> Horário de Atendimento</h2>
-                <ul class="horarios-list">
-                    <li><span>Terça a Sexta-feira</span> <span>09:00 - 19:00</span></li>
-                    <li><span>Sábado</span> <span>08:00 - 15:30</span></li>
-                    <li><span>Domingo e Segunda</span> <span>Fechado</span></li>
-                </ul>
-            </div>
-
-            <div class="card">
-                <h2><i class="fa-solid fa-phone"></i> Fale Conosco</h2>
-                <div class="telefone-box">
-                    <span id="numero-telefone">(11) 94116-2831</span>
-                    <button class="copy-btn" onclick="copiarTelefone()" title="Copiar número">
-                        <i class="fa-regular fa-copy"></i>
-                    </button>
+            <section class="grid-2">      
+                <div class="card">
+                    <h2><i class="fa-solid fa-clock"></i> Horário de Atendimento</h2>
+                    <ul class="horarios-list">
+                        <li><span>Terça a Sexta-feira</span> <span>09:00 - 19:00</span></li>
+                        <li><span>Sábado</span> <span>08:00 - 15:30</span></li>
+                        <li><span>Domingo e Segunda</span> <span>Fechado</span></li>
+                    </ul>
                 </div>
-                <a href="tel:+5511941162831" class="link-ligar"><i class="fa-solid fa-phone-volume"></i> Ligar agora</a>
-                <a href="https://wa.me/5511941162831?text=Olá!%20Gostaria%20de%20marcar%20um%20horário." target="_blank" class="btn-whatsapp">
-                    <i class="fa-brands fa-whatsapp"></i> WhatsApp
-                </a>
-            </div>
-        </section>
+
+                <div class="card">
+                    <h2><i class="fa-solid fa-phone"></i> Fale Conosco</h2>
+                    <div class="telefone-box">
+                        <span id="numero-telefone">(11) 94116-2831</span>
+                        <button class="copy-btn" onclick="copiarTelefone()" title="Copiar número">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
+                    </div>
+                    <a href="tel:+5511941162831" class="link-ligar"><i class="fa-solid fa-phone-volume"></i> Ligar agora</a>
+                    <a href="https://wa.me/5511941162831?text=Olá!%20Gostaria%20de%20marcar%20um%20horário." target="_blank" class="btn-whatsapp">
+                        <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                    </a>
+                </div>
+            </section>
 
         <!-- ASSINATURAS -->
         <h2 class="section-title"><i class="fa-solid fa-gem"></i> Assinaturas</h2>
-        <section class="grid-2">   
-            <div class="plano-card">
-                <h3 class="serif" style="font-size: 1.8rem;">Bronze</h3>
-                <div class="plano-preco">R$ 79<span>/mês</span></div>
-                <ul class="plano-lista">
-                    <li><i class="fa-solid fa-check"></i> 2 cortes por mês</li>
-                    <li><i class="fa-solid fa-check"></i> 1 barba por mês</li>
-                    <li><i class="fa-solid fa-check"></i> 10% desconto em produtos</li>
-                </ul>
-                <button class="btn-outline">Assinar</button>
+        <section class="grid-2" id="grid-planos-home">
+            </section>
+            
+        <div id="assinaturas-modal" class="modal-overlay" style="display: none;">
+        <div class="login-box card" style="max-height: 90vh; overflow-y: auto; width: 95%; max-width: 450px;">
+            <button class="btn-back" onclick="fecharAssinaturas()">← Voltar</button>
+            <h2 style="justify-content: center; margin-bottom: 10px; margin-top: 20px;"><i class="fa-solid fa-gem"></i> Planos</h2>
+            
+            <div style="background-color: #1a1a1a; padding: 15px; border-radius: 8px; margin-bottom: 25px; border: 1px solid var(--border-color); text-align: center;">
+                <span style="color: var(--text-muted); font-size: 0.85rem;">Seu plano atual:</span><br>
+                <strong id="status-meu-plano" style="color: var(--gold); font-size: 1.2rem;">Carregando...</strong>
             </div>
 
-            <div class="plano-card plano-ouro">
-                <div class="ribbon">MAIS POPULAR</div>
-                <h3 class="serif" style="font-size: 1.8rem; color: #fff;">Ouro</h3>
-                <div class="plano-preco">R$ 129<span>/mês</span></div>
-                <ul class="plano-lista">
-                    <li><i class="fa-solid fa-check"></i> Cortes ilimitados</li>
-                    <li><i class="fa-solid fa-check"></i> 2 barbas por mês</li>
-                    <li><i class="fa-solid fa-check"></i> 20% desconto em produtos</li>
-                    <li><i class="fa-solid fa-check"></i> Agendamento prioritário</li>
-                </ul>
-                <button class="btn-outline">Assinar</button>
-            </div>
-        </section>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 20px; font-size: 0.9rem;">
+                Escolha o plano ideal para o seu estilo.
+            </p>
+            
+            <div id="lista-assinaturas-modal" style="display: flex; flex-direction: column; gap: 15px;">
+                </div>
+        </div>
+    </div>
 
         <!-- COMO CHEGAR -->
         <div class="card" style="margin-top: 40px;">
@@ -195,11 +307,8 @@
                 <p style="color: var(--text-muted); font-size: 0.9rem;">Siga Guapo The Barber nas redes sociais</p>
             </div>
             <div class="social-btns">
-                <a href="#" class="btn-social btn-instagram">
+                <a href="https://www.instagram.com/guapothebarber/" target="_blank" class="btn-social btn-instagram">
                     <i class="fa-brands fa-instagram"></i> Instagram
-                </a>
-                <a href="#" class="btn-social btn-tiktok">
-                    <i class="fa-brands fa-tiktok"></i> TikTok
                 </a>
             </div>
         </footer>
@@ -210,7 +319,6 @@
     <script src="js/auth.js"></script>  
     <script src="js/login.js"></script>  
     <script src="js/script.js"></script>
-</body>
-</html>
+    <div id="toast-container" class="toast-container"></div>
 </body>
 </html>
