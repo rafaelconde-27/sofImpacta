@@ -108,8 +108,28 @@
                         .single();
 
                     if (error || !data) {
-                        if (typeof mostrarToast === "function") mostrarToast('Número não encontrado. Verifique se digitou corretamente.', 'aviso');
-                        else alert('Número não encontrado.');
+                        // NÚMERO NÃO ENCONTRADO: Redirecionar para a tela de cadastro
+                        console.log("Usuário não encontrado. Redirecionando para cadastro...");
+                        
+                        // Opcional: Mostra um aviso amigável
+                        if (typeof mostrarToast === "function") {
+                            mostrarToast('Cadastro não encontrado. Vamos criar um!', 'aviso');
+                        }
+                        
+                        // 1. Esconde a tela atual de login
+                        document.getElementById('login-modal').style.display = 'none';
+                        
+                        // 2. Preenche o campo de telefone na tela de cadastro com o número digitado (pois é readonly)
+                        const inputCadTelefone = document.getElementById('cad-telefone');
+                        if (inputCadTelefone) {
+                            inputCadTelefone.value = telefone;
+                        }
+                        
+                        // 3. Abre a tela de cadastro
+                        const modalCadastro = document.getElementById('cadastro-modal');
+                        if (modalCadastro) {
+                            modalCadastro.style.display = 'flex';
+                        }
                     } else {
                         // SUCESSO: O usuário existe! 
                         // Esconde a tela do telefone e ABRE A TELA DE SENHA
@@ -160,6 +180,11 @@
                         alert("Erro ao cadastrar: " + error.message);
                     } else {
                         alert("Cadastro realizado com sucesso!");
+                        
+                        // SALVA OS DADOS NA MEMÓRIA DO NAVEGADOR
+                        localStorage.setItem('userNome', nome);
+                        localStorage.setItem('userTelefone', celular);
+                        
                         modalCadastro.style.display = 'none';
                         modalLogin.style.display = 'none';
                     }
@@ -201,8 +226,12 @@
                     if (error && error.code === 'PGRST116') {
                         alert("Senha incorreta. Tente novamente.");
                         } else if (data) {
-                    // Senha correta
+                   // Senha correta
                     console.log(`Login efetuado com sucesso! Bem-vindo(a), ${data.nome}`);
+                    
+                    // ESSAS DUAS LINHAS PRECISAM ESTAR AQUI:
+                    localStorage.setItem('userNome', data.nome);
+                    localStorage.setItem('userTelefone', telefoneValue);
                     
                     // Fecha o modal de senha
                     modalSenha.style.display = 'none';
@@ -259,18 +288,44 @@
             btnSair.addEventListener('click', (e) => {
                 e.preventDefault(); 
                 
-                const btnToggle = document.getElementById('btn-toggle-dropdown');
-                const dropdown = document.getElementById('dropdown-menu');
+                // 1. Guarda o visual original e aplica o efeito de carregamento
+                const textoOriginal = btnSair.innerHTML;
+                btnSair.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saindo...';
+                btnSair.style.pointerEvents = 'none'; // Trava o botão para evitar duplo clique
                 
-                // Reseta o visual do botão para o estado original
-                btnToggle.innerHTML = 'Entrar / Registrar'; 
-                dropdown.classList.remove('show'); 
-                
-                // Limpa os dados preenchidos nos inputs
-                if(typeof inputTelefone !== 'undefined') inputTelefone.value = '';
-                if(typeof inputSenhaLogin !== 'undefined') inputSenhaLogin.value = '';
-                
-                console.log("Usuário deslogado.");
+                // 2. Simula o tempo de 1.5 segundos
+                setTimeout(() => {
+                    const btnToggle = document.getElementById('btn-toggle-dropdown');
+                    const dropdown = document.getElementById('dropdown-menu');
+                    
+                    // Reseta o visual do botão principal
+                    if (btnToggle) btnToggle.innerHTML = 'Entrar / Registrar'; 
+                    if (dropdown) dropdown.classList.remove('show'); 
+                    
+                    // Limpa os dados preenchidos nos inputs de login
+                    const inputTel = document.getElementById('telefone-login');
+                    const inputSenha = document.getElementById('senha-login');
+                    if(inputTel) inputTel.value = '';
+                    if(inputSenha) inputSenha.value = '';
+                    
+                    // APAGA A MEMÓRIA DO NAVEGADOR
+                    localStorage.removeItem('userNome');
+                    localStorage.removeItem('userTelefone');
+                    localStorage.removeItem('agendNome');
+                    localStorage.removeItem('agendTelefone');
+                    
+                    // Restaura o visual original do botão "Sair" para o próximo login
+                    btnSair.innerHTML = textoOriginal;
+                    btnSair.style.pointerEvents = 'auto';
+
+                    console.log("Usuário deslogado.");
+                    
+                    // Mostra um aviso amigável que a conta foi desconectada
+                    if (typeof mostrarToast === 'function') {
+                        mostrarToast('Você saiu da sua conta com sucesso.');
+                    }
+
+                }, 1500); // 1500ms = 1.5 segundos
             });
         }
 
@@ -342,3 +397,38 @@
             });
         }
 
+        // ==========================================
+        // VERIFICAÇÃO AUTOMÁTICA DE SESSÃO AO CARREGAR A PÁGINA INICIAL
+        // ==========================================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Busca se existe algum usuário salvo na memória do navegador
+            const nomeSalvo = localStorage.getItem('userNome');
+            const telefoneSalvo = localStorage.getItem('userTelefone');
+            
+            // Captura os elementos da tela
+            const modalSelecao = document.getElementById('selecao-perfil-modal');
+            const btnToggle = document.getElementById('btn-toggle-dropdown');
+            const dropNome = document.getElementById('dropdown-nome');
+            const dropTel = document.getElementById('dropdown-telefone');
+            
+            // Se encontrou nome e telefone na memória, significa que já está logado!
+            if (nomeSalvo && telefoneSalvo) {
+                
+                // 1. Esconde a tela inicial de "Sou Cliente / Sou Barbeiro"
+                if (modalSelecao) {
+                    modalSelecao.style.display = 'none';
+                }
+                
+                // 2. Muda o botão da barra superior de "Entrar" para "Olá, Nome"
+                if (btnToggle) {
+                    const primeiroNome = nomeSalvo.split(' ')[0];
+                    btnToggle.innerHTML = `<i class="fa-solid fa-user-check"></i> Olá, ${primeiroNome}`;
+                }
+                
+                // 3. Injeta os dados corretos no menu suspenso do usuário
+                if (dropNome) dropNome.innerText = nomeSalvo;
+                if (dropTel) dropTel.innerText = telefoneSalvo;
+                
+                console.log(`Sessão restaurada automaticamente para: ${nomeSalvo}`);
+            }
+        });

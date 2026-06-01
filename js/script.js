@@ -466,3 +466,196 @@
                 });
             }
         });
+
+        // --- LÓGICA DO BOTÃO "QUERO AGENDAR" ---
+        window.iniciarAgendamento = function() {
+            const telefoneTela = document.getElementById('dropdown-telefone').innerText;
+
+            // 1. Trava de segurança: Se não estiver logado, pede para fazer login
+            if (!telefoneTela || telefoneTela === "(11) 90000-0000") {
+                mostrarToast("Por favor, faça login ou cadastre-se antes de agendar.", "aviso");
+                document.getElementById('login-modal').style.display = 'flex';
+                return;
+            }
+
+            // 2. Pega o nome completo e fatia para pegar só o PRIMEIRO NOME
+            const nomeCompleto = document.getElementById('dropdown-nome').innerText;
+            const primeiroNome = nomeCompleto.split(' ')[0]; 
+
+            // 3. Salva na memória do navegador de forma forçada
+            localStorage.setItem('agendNome', primeiroNome);
+            localStorage.setItem('agendTelefone', telefoneTela);
+
+            // 4. Redireciona para a página
+            window.location.href = 'agendamento.html';
+        }
+
+        // ==========================================
+        // LÓGICA DO MODAL DE MEUS AGENDAMENTOS
+        // ==========================================
+        const modalMeusAgendamentos = document.getElementById('meus-agendamentos-modal');
+        const btnAbrirMeusAgendamentos = document.getElementById('btn-abrir-meus-agendamentos');
+        const listaMeusAgendamentos = document.getElementById('lista-meus-agendamentos');
+        const tabFuturos = document.getElementById('tab-futuros');
+        const tabPassados = document.getElementById('tab-passados');
+
+        let agendamentosCliente = []; // Guarda a lista vinda do banco
+
+        // Função global para fechar o modal
+        window.fecharMeusAgendamentos = function() {
+            if (modalMeusAgendamentos) modalMeusAgendamentos.style.display = 'none';
+        }
+
+        // Evento de abrir e buscar os dados
+        if (btnAbrirMeusAgendamentos) {
+            btnAbrirMeusAgendamentos.addEventListener('click', async (e) => {
+                e.preventDefault();
+                
+                const telefoneLogado = document.getElementById('dropdown-telefone').innerText;
+                
+                if (!telefoneLogado || telefoneLogado === "(11) 90000-0000") {
+                    mostrarToast("Você precisa estar logado para ver seus agendamentos.", "aviso");
+                    document.getElementById('login-modal').style.display = 'flex';
+                    return;
+                }
+
+                // 1. Fecha o menu dropdown e abre o modal novo
+                document.getElementById('dropdown-menu').classList.remove('show');
+                modalMeusAgendamentos.style.display = 'flex';
+                listaMeusAgendamentos.innerHTML = '<p style="text-align: center; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Buscando seus horários...</p>';
+
+                // Força a aba "Próximos" a ficar ativa visualmente ao abrir
+                mudarAbaAgendamentos('futuros');
+
+                try {
+                    // 2. Busca todos os agendamentos desse cliente no Supabase
+                    const { data, error } = await window.supabaseClient
+                        .from('agendamentos')
+                        .select('*')
+                        .eq('cliente_telefone', telefoneLogado);
+
+                    if (error) throw error;
+
+                    agendamentosCliente = data || [];
+                    renderizarAgendamentos('futuros'); // Inicia mostrando os do futuro
+
+                } catch (err) {
+                    console.error("Erro ao carregar agendamentos:", err);
+                    listaMeusAgendamentos.innerHTML = '<p style="text-align: center; color: #ff4d4d;">Erro ao carregar seu histórico.</p>';
+                }
+            });
+        }
+
+        // Funções de clique das Abas
+        if (tabFuturos) tabFuturos.addEventListener('click', () => mudarAbaAgendamentos('futuros'));
+        if (tabPassados) tabPassados.addEventListener('click', () => mudarAbaAgendamentos('passados'));
+
+        // Função para mudar o visual das abas
+        window.mudarAbaAgendamentos = function(tipo) {
+            if (tipo === 'futuros') {
+                tabFuturos.style.background = 'var(--gold)';
+                tabFuturos.style.color = '#000';
+                tabFuturos.style.border = 'none';
+                
+                tabPassados.style.background = 'transparent';
+                tabPassados.style.color = '#fff';
+                tabPassados.style.border = '1px solid #333';
+            } else {
+                tabPassados.style.background = 'var(--gold)';
+                tabPassados.style.color = '#000';
+                tabPassados.style.border = 'none';
+
+                tabFuturos.style.background = 'transparent';
+                tabFuturos.style.color = '#fff';
+                tabFuturos.style.border = '1px solid #333';
+            }
+            renderizarAgendamentos(tipo);
+        }
+
+        // Função que cruza as datas, separa passado/futuro e desenha os cards na tela
+        function renderizarAgendamentos(tipo) {
+            if (!listaMeusAgendamentos) return;
+            listaMeusAgendamentos.innerHTML = '';
+
+            const agora = new Date(); // Puxa a data e horário exato do seu computador
+
+            // FILTRO: Separa passado e futuro
+            const filtrados = agendamentosCliente.filter(ag => {
+                // Monta uma data comparável: 2026-06-01 e 18:30 viram um objeto Date
+                const [ano, mes, dia] = ag.data_agendamento.split('-');
+                const [hora, minuto] = ag.horario.split(':');
+                const dataAgendamento = new Date(ano, mes - 1, dia, hora, minuto);
+
+                if (tipo === 'futuros') {
+                    return dataAgendamento >= agora;
+                } else {
+                    return dataAgendamento < agora;
+                }
+            });
+
+            // ORDENAÇÃO
+            if (tipo === 'futuros') {
+                // Futuros: do mais próximo para o mais distante (Crescente)
+                filtrados.sort((a, b) => new Date(`${a.data_agendamento}T${a.horario}`) - new Date(`${b.data_agendamento}T${b.horario}`));
+            } else {
+                // Passados: do mais recente para o mais antigo (Decrescente)
+                filtrados.sort((a, b) => new Date(`${b.data_agendamento}T${b.horario}`) - new Date(`${a.data_agendamento}T${a.horario}`));
+            }
+
+            if (filtrados.length === 0) {
+                listaMeusAgendamentos.innerHTML = `<p style="text-align: center; color: var(--text-muted); margin-top: 20px;">Nenhum agendamento encontrado.</p>`;
+                return;
+            }
+
+            // GERAÇÃO DOS CARDS
+            filtrados.forEach(ag => {
+                const dataFormatada = ag.data_agendamento.split('-').reverse().join('/');
+                
+                // O Supabase devolve serviços como JSON. Isso extrai só os nomes
+                let nomesServicos = '';
+                try {
+                    let srvs = typeof ag.servicos === 'string' ? JSON.parse(ag.servicos) : ag.servicos;
+                    nomesServicos = srvs.map(s => s.nome).join(', ');
+                } catch(e) {
+                    nomesServicos = 'Corte/Serviço';
+                }
+
+                // Ajuste visual: Opacidade menor se for histórico
+                const statusCor = tipo === 'futuros' ? 'var(--gold)' : '#555';
+                const badgeTexto = tipo === 'futuros' ? 'Confirmado' : 'Realizado';
+                const opacidade = tipo === 'futuros' ? '1' : '0.6';
+
+                const card = `
+                    <div style="background-color: #1a1a1a; padding: 18px; border-radius: 10px; border: 1px solid #333; opacity: ${opacidade}; position: relative;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 12px; margin-bottom: 12px;">
+                            <div style="font-weight: bold; color: #fff; font-size: 1.1rem; display: flex; align-items: center; gap: 8px;">
+                                <i class="fa-regular fa-calendar-check" style="color: ${statusCor}; font-size: 1.2rem;"></i> ${dataFormatada}
+                            </div>
+                            <div style="background-color: #111; color: ${statusCor}; font-weight: 800; padding: 6px 12px; border-radius: 6px; border: 1px solid ${statusCor}; font-size: 1rem;">
+                                ${ag.horario}
+                            </div>
+                        </div>
+                        
+                        <div style="margin-bottom: 10px; display: flex; gap: 10px; align-items: center;">
+                            <div style="width: 35px; height: 35px; border-radius: 50%; background: #222; border: 1px solid #444; display: flex; justify-content: center; align-items: center; color: var(--gold);">
+                                <i class="fa-solid fa-scissors"></i>
+                            </div>
+                            <div>
+                                <span style="color: var(--text-muted); font-size: 0.8rem; display: block; line-height: 1;">Profissional</span>
+                                <span style="color: #fff; font-weight: 600; font-size: 1.05rem;">${ag.profissional_nome}</span>
+                            </div>
+                        </div>
+
+                        <div style="background: rgba(255, 255, 255, 0.03); padding: 10px; border-radius: 6px; border: 1px dashed #333;">
+                            <span style="color: var(--text-muted); font-size: 0.8rem; display: block; margin-bottom: 3px;">Serviços Agendados:</span>
+                            <span style="color: #ddd; font-size: 0.95rem; font-weight: 600;">${nomesServicos}</span>
+                        </div>
+                        
+                        <div style="position: absolute; top: -10px; right: -10px; background: ${tipo === 'futuros' ? '#25D366' : '#444'}; color: #fff; font-size: 0.7rem; font-weight: bold; padding: 4px 10px; border-radius: 12px; text-transform: uppercase;">
+                            ${badgeTexto}
+                        </div>
+                    </div>
+                `;
+                listaMeusAgendamentos.innerHTML += card;
+            });
+        }

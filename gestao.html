@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/gestao.css">
+    <link rel="stylesheet" href="css/login.css">
 </head>
 <body>
 
@@ -53,14 +54,27 @@
             <div class="aba-header">
                 <h2>Gestão de Agenda</h2>
                 <div class="aba-filtros">
-                    <input type="date" class="dash-input" id="filtro-data-agenda">
-                    <select class="dash-input">
-                        <option>Todos os barbeiros</option>
+                    <input type="date" class="dash-input" id="filtro-data-agenda" onchange="carregarAgendaDoDia()">
+                    <select class="dash-input" id="filtro-prof-agenda" onchange="carregarAgendaDoDia()">
+                        <option value="todos">Todos os barbeiros</option>
                     </select>
                 </div>
             </div>
-            <div class="aba-body">
-                <p style="color: var(--text-muted);">Nenhum agendamento para esta data.</p>
+            
+            <div class="aba-body agenda-container">
+                <div class="agenda-coluna">
+                    <h3 class="agenda-subtitulo"><i class="fa-regular fa-clock"></i> Disponibilidade do Dia</h3>
+                    <div id="grade-horarios-agenda" class="horarios-grid">
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Carregando horários...</p>
+                    </div>
+                </div>
+
+                <div class="agenda-coluna">
+                    <h3 class="agenda-subtitulo"><i class="fa-solid fa-list-check"></i> Próximos Agendamentos</h3>
+                    <div id="lista-agendamentos-dia" class="agendamentos-lista">
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Buscando agendamentos...</p>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -84,34 +98,152 @@
 
         <div id="aba-equipe" class="aba-conteudo">
             <div class="aba-header">
-                <h2>Equipe</h2>
+                <h2 style="display: flex; align-items: center; gap: 10px;"><div style="width: 20px; height: 20px; background: #fff; border-radius: 4px;"></div> Gestão de Equipe</h2>
+                <button class="btn-gold" onclick="abrirModalEquipe()" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Inter', sans-serif;">
+                    + Adicionar Profissional
+                </button>
             </div>
             <div class="aba-body">
-                <p style="color: var(--text-muted);">Módulo de gestão de barbeiros em construção.</p>
+                <div id="lista-equipe">
+                    <p style="text-align: center; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Carregando equipe...</p>
+                </div>
             </div>
         </div>
 
         <div id="aba-servicos" class="aba-conteudo">
             <div class="aba-header">
                 <h2>Catálogo de Serviços</h2>
+                <button class="btn-gold" onclick="abrirModalServico()" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Inter', sans-serif;">
+                    <i class="fa-solid fa-plus"></i> Novo Serviço
+                </button>
             </div>
             <div class="aba-body">
-                <p style="color: var(--text-muted);">Módulo de preços e tempo de serviços em construção.</p>
+                <div id="lista-servicos">
+                    <p style="text-align: center; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Carregando serviços...</p>
+                </div>
             </div>
         </div>
 
-        <div id="aba-configuracoes" class="aba-conteudo">
-            <div class="aba-header">
-                <h2>Configurações do Sistema</h2>
+        </div> <div id="modal-servico" class="modal-overlay" style="display: none; z-index: 9999;">
+        <div class="login-box card" style="background-color: #1a1a1a; border: 1px solid #333; max-width: 450px; position: relative;">
+            
+            <button onclick="fecharModalServico()" style="position: absolute; right: 20px; top: 20px; background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;">×</button>
+            
+            <h2 style="margin-bottom: 25px; color: #fff; font-family: 'Inter', sans-serif; font-size: 1.5rem;">Adicionar Novo Serviço</h2>
+            
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label>Nome do Serviço</label>
+                <input type="text" id="serv-nome" placeholder="Ex: Corte Degradê" style="background-color: #121212;">
             </div>
-            <div class="aba-body">
-                <p style="color: var(--text-muted);">Ajustes gerais da barbearia.</p>
+            
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label>Descrição (Opcional)</label>
+                <input type="text" id="serv-desc" placeholder="Ex: Apenas máquina e tesoura" style="background-color: #121212;">
+            </div>
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                <div class="input-group" style="flex: 1;">
+                    <label>Preço (R$)</label>
+                    <input type="number" id="serv-preco" placeholder="Ex: 45.00" step="0.01" style="background-color: #121212;">
+                </div>
+                <div class="input-group" style="flex: 1;">
+                    <label>Duração (minutos)</label>
+                    <input type="number" id="serv-duracao" placeholder="Ex: 30" style="background-color: #121212;">
+                </div>
+            </div>
+            
+            <button id="btn-salvar-servico" class="btn-gold" style="width: 100%; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; border: none;">
+                💾 Salvar Serviço
+            </button>
+        </div>
+    </div>
+
+        <div id="modal-equipe" class="modal-overlay" style="display: none; z-index: 9999;">
+        <div class="login-box card" style="background-color: #1a1a1a; border: 1px solid #333; max-width: 450px; position: relative;">
+            
+            <button onclick="fecharModalEquipe()" style="position: absolute; right: 20px; top: 20px; background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;">×</button>
+            
+            <h2 style="margin-bottom: 25px; color: #fff; font-family: 'Inter', sans-serif; font-size: 1.5rem;">Adicionar Novo Profissional</h2>
+            
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label>Nome do Profissional</label>
+                <input type="text" id="eqp-nome" placeholder="Ex: João da Silva" style="background-color: #121212;">
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label>Telefone / WhatsApp</label>
+                <input type="text" id="eqp-telefone" placeholder="(11) 90000-0000" style="background-color: #121212;">
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 15px;">
+                <label>Comissão (%)</label>
+                <input type="number" id="eqp-comissao" placeholder="Ex: 50" style="background-color: #121212;">
+            </div>
+            
+            <div class="input-group" style="margin-bottom: 25px;">
+                <label>Status</label>
+                <select id="eqp-status" style="width: 100%; box-sizing: border-box; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #121212; color: #fff; font-size: 1.1rem; outline: none; cursor: pointer;">
+                    <option value="Ativo">Ativo</option>
+                    <option value="Inativo">Inativo</option>
+                </select>
+            </div>
+            
+            <button id="btn-salvar-equipe" class="btn-gold" style="width: 100%; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; border: none;">
+                💾 Salvar Profissional
+            </button>
+        </div>
+    </div>
+
+        <div id="aba-configuracoes" class="aba-conteudo">           
+            <div class="config-container">
+                <div class="config-card">
+                    <h2 class="config-title"><i class="fa-solid fa-gear"></i> Horários de Funcionamento</h2>
+                    
+                    <div id="grid-horarios" class="horarios-grid">
+                        </div>
+                    
+                    <button class="btn-gold config-btn" onclick="salvarHorariosMaster()"><i class="fa-solid fa-floppy-disk"></i> Salvar Horários</button>
+                </div>
+
+                <div class="config-card">
+                    <h2 class="config-title"><i class="fa-solid fa-wrench"></i> Configurações Gerais</h2>
+                    
+                    <div class="input-group config-input-group">
+                        <label>Nome da Barbearia</label>
+                        <input type="text" id="conf-nome" value="Guapo The Barber">
+                    </div>
+                    
+                    <div class="input-group config-input-group">
+                        <label>Telefone</label>
+                        <input type="text" id="conf-telefone" value="(11) 94116-2831">
+                    </div>
+                    
+                    <div class="input-group config-input-group">
+                        <label>Endereço</label>
+                        <input type="text" id="conf-endereco" value="Rua Pan, 37 - Nova Gerty - São Caetano do Sul">
+                    </div>
+                    
+                    <div class="input-group config-input-group">
+                        <label>Duração padrão dos serviços (minutos)</label>
+                        <input type="number" id="conf-duracao" value="30">
+                    </div>
+                    
+                    <div class="input-group config-input-group" style="margin-bottom: 30px;">
+                        <label>Intervalo entre agendamentos (minutos)</label>
+                        <input type="number" id="conf-intervalo" value="0">
+                    </div>
+
+                    <button class="btn-gold config-btn" onclick="salvarConfigGerais()"><i class="fa-solid fa-floppy-disk"></i> Salvar Configurações</button>
+                </div>
             </div>
         </div>
 
     </div>
 
-    <!-- CHAMANDO FUNÇÕES -->
-    <script src="js/gestao.js"></script>
+    <div id="toast-container" class="toast-container"></div>
+        <!-- CHAMANDO FUNÇÕES -->
+        <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+        <script src="js/auth.js"></script>
+        <script src="js/gestao.js"></script>
 </body>
 </html>
