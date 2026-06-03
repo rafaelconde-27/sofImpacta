@@ -20,7 +20,7 @@
         const inputLoginBarbeiro = document.getElementById('login-barbeiro');
         const inputSenhaBarbeiro = document.getElementById('senha-barbeiro');
 
-        if (btnEntrarBarbeiro) {
+       if (btnEntrarBarbeiro) {
             btnEntrarBarbeiro.addEventListener('click', async () => {
                 const loginValue = inputLoginBarbeiro.value.trim();
                 const senhaValue = inputSenhaBarbeiro.value;
@@ -35,10 +35,10 @@
                 btnEntrarBarbeiro.disabled = true;
 
                 try {
-                    // Consulta a tabela "barbeiro" buscando pela coluna "login"
+                    // Consulta a tabela "barbeiro" buscando pelas colunas nome e nivel_acesso
                     const { data, error } = await window.supabaseClient
                         .from('barbeiro')
-                        .select('nome')
+                        .select('nome, nivel_acesso') // <-- Alterado aqui (Puxa o nível de acesso)
                         .eq('login', loginValue)
                         .eq('senha', senhaValue)
                         .single();
@@ -46,6 +46,10 @@
                     if (error || !data) {
                         mostrarToast("Acesso negado. Credenciais inválidas.", "aviso");
                     } else {
+                        // Salva os dados do barbeiro na memória para usar no painel de gestão
+                        localStorage.setItem('barbeiroLogadoNome', data.nome);
+                        localStorage.setItem('barbeiroLogadoNivel', data.nivel_acesso);
+                        
                         // Login bem-sucedido! Redireciona direto para a nova página
                         window.location.href = 'gestao.html';
                     }
@@ -282,48 +286,29 @@
             }
         });
 
-        // Lógica para sair da conta
+        // Lógica para sair da conta do Cliente
         const btnSair = document.getElementById('btn-sair');
         if (btnSair) {
             btnSair.addEventListener('click', (e) => {
                 e.preventDefault(); 
                 
-                // 1. Guarda o visual original e aplica o efeito de carregamento
-                const textoOriginal = btnSair.innerHTML;
+                // 1. Aplica o efeito de carregamento no botão
                 btnSair.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Saindo...';
                 btnSair.style.pointerEvents = 'none'; // Trava o botão para evitar duplo clique
                 
-                // 2. Simula o tempo de 1.5 segundos
+                // 2. Aguarda 1.5 segundos para o cliente ver que o sistema está deslogando
                 setTimeout(() => {
-                    const btnToggle = document.getElementById('btn-toggle-dropdown');
-                    const dropdown = document.getElementById('dropdown-menu');
                     
-                    // Reseta o visual do botão principal
-                    if (btnToggle) btnToggle.innerHTML = 'Entrar / Registrar'; 
-                    if (dropdown) dropdown.classList.remove('show'); 
-                    
-                    // Limpa os dados preenchidos nos inputs de login
-                    const inputTel = document.getElementById('telefone-login');
-                    const inputSenha = document.getElementById('senha-login');
-                    if(inputTel) inputTel.value = '';
-                    if(inputSenha) inputSenha.value = '';
-                    
-                    // APAGA A MEMÓRIA DO NAVEGADOR
+                    // 3. APAGA A MEMÓRIA DO NAVEGADOR DO CLIENTE
                     localStorage.removeItem('userNome');
                     localStorage.removeItem('userTelefone');
                     localStorage.removeItem('agendNome');
                     localStorage.removeItem('agendTelefone');
                     
-                    // Restaura o visual original do botão "Sair" para o próximo login
-                    btnSair.innerHTML = textoOriginal;
-                    btnSair.style.pointerEvents = 'auto';
-
-                    console.log("Usuário deslogado.");
+                    console.log("Cliente deslogado.");
                     
-                    // Mostra um aviso amigável que a conta foi desconectada
-                    if (typeof mostrarToast === 'function') {
-                        mostrarToast('Você saiu da sua conta com sucesso.');
-                    }
+                    // 4. Redireciona e recarrega a página inicial forçando a tela de seleção a aparecer
+                    window.location.href = 'index.html';
 
                 }, 1500); // 1500ms = 1.5 segundos
             });

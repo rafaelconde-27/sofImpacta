@@ -98,8 +98,18 @@
                 <h3 style="margin-bottom: 20px; color: #fff; font-size: 1.3rem;">Escolha a Data e o Horário</h3>
                 
                 <div style="margin-bottom: 25px;">
-                    <label style="color: var(--text-muted); font-size: 0.9rem; display: block; margin-bottom: 8px;"><i class="fa-regular fa-calendar"></i> Data do Agendamento:</label>
-                    <input type="date" id="input-data-agendamento" onchange="carregarHorariosDisponiveis()" style="width: 100%; padding: 15px; border-radius: 8px; border: 1px solid #333; background-color: #111; color: #fff; font-size: 1.1rem; color-scheme: dark; outline: none; cursor: pointer;">
+                    <label style="color: var(--text-muted); font-size: 0.9rem; display: block; margin-bottom: 12px;"><i class="fa-regular fa-calendar"></i> Data do Agendamento:</label>
+                    
+                    <input type="hidden" id="input-data-agendamento">
+                    
+                    <div class="carrossel-wrapper">
+                        <button class="btn-carrossel left" onclick="rolarCarrossel(-1)" type="button"><i class="fa-solid fa-chevron-left"></i></button>
+                        
+                        <div id="carrossel-datas" class="carrossel-datas">
+                            </div>
+                        
+                        <button class="btn-carrossel right" onclick="rolarCarrossel(1)" type="button"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
                 </div>
 
                 <div id="lista-horarios-agendamento" class="horarios-grid-cliente">

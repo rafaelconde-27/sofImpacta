@@ -549,3 +549,135 @@
             font-size: 1.1rem;
             letter-spacing: 1px;
         }
+
+        /* ==========================================
+        ESTILOS DA GESTÃO DE ACESSOS (TABELA E BADGES)
+        ========================================== */
+
+        .acessos-header-row {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1.5fr 1fr 1.5fr;
+            gap: 15px;
+            padding: 15px 20px;
+            background-color: transparent;
+            border-bottom: 1px solid #333;
+            font-weight: bold;
+            color: var(--gold);
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .acessos-row {
+            display: grid;
+            grid-template-columns: 2fr 2fr 1.5fr 1fr 1.5fr;
+            gap: 15px;
+            padding: 15px 20px;
+            background-color: #161616;
+            border-bottom: 1px solid #2a2a2a;
+            align-items: center;
+            transition: 0.3s;
+        }
+
+        .acessos-row:hover {
+            background-color: #1c1c1c;
+        }
+
+        /* Badges de Nível de Acesso */
+        .badge-nivel {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .badge-admin {
+            background-color: rgba(212, 175, 55, 0.1);
+            color: var(--gold);
+            border: 1px solid var(--gold);
+        }
+
+        .badge-operador {
+            background-color: rgba(66, 133, 244, 0.1);
+            color: #4285f4;
+            border: 1px solid #4285f4;
+        }
+
+        /* Badges de Status */
+        .badge-status-tab {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-align: center;
+            display: inline-block;
+        }
+
+        .badge-ativo-tab {
+            background-color: rgba(37, 211, 102, 0.1);
+            color: #25D366;
+        }
+
+        .badge-inativo-tab {
+            background-color: rgba(255, 77, 77, 0.1);
+            color: #ff4d4d;
+        }
+
+        /* Botões de Ação na Tabela */
+        .acoes-botoes {
+            display: flex;
+            gap: 8px; /* Reduzi o gap um pouco para caber os 3 botões */
+            justify-content: flex-end;
+        }
+
+        .btn-editar-ac {
+            background-color: #f1f1f1;
+            color: #000;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-editar-ac:hover { background-color: #ccc; }
+
+        /* Botão Laranja para Desativar/Ativar */
+        .btn-desativar-ac {
+            background-color: #f59e0b; 
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-desativar-ac:hover { background-color: #d97706; }
+
+        /* Botão Vermelho para Excluir do Banco */
+        .btn-excluir-ac {
+            background-color: #f43f5e;
+            color: #fff;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.8rem;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-excluir-ac:hover { background-color: #e11d48; }

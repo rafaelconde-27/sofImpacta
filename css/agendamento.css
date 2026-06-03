@@ -243,3 +243,109 @@
         #agend-cliente-nome:focus, #agend-cliente-telefone:focus {
             border-color: var(--gold) !important;
         }
+
+        /* --- ESTILOS DO CARROSSEL DE DATAS (NOVO) --- */
+        .carrossel-datas {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 10px; /* Espaço para a sombra do card */
+            /* Oculta scrollbar mas mantém o deslize funcional */
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+        
+        .carrossel-datas::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
+        }
+        
+        .data-card {
+            background-color: #111;
+            border: 1px solid #333;
+            border-radius: 10px;
+            min-width: 75px;
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            user-select: none;
+            flex-shrink: 0; /* Impede que os cards sejam esmagados */
+        }
+        
+        .data-card:hover {
+            border-color: #8b5cf6;
+            background-color: #1a1a2e;
+        }
+        
+        .data-card.selected {
+            background-color: #8b5cf6;
+            color: #fff;
+            border-color: #8b5cf6;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+        }
+        
+        .data-card-dia-semana {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-weight: 600;
+        }
+        
+        .data-card.selected .data-card-dia-semana {
+            color: #e0d4fc; /* Roxo clarinho para dar contraste na caixa ativada */
+        }
+        
+        .data-card-numero {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 2px;
+            line-height: 1;
+        }
+        
+        .data-card-mes {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .data-card.selected .data-card-mes {
+            color: #e0d4fc;
+        }
+
+        /* --- ESTILOS DAS SETAS DO CARROSSEL --- */
+        .carrossel-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Espaço entre as setas e as datas */
+        }
+
+        .btn-carrossel {
+            background-color: #1a1a1a;
+            color: var(--text-muted);
+            border: 1px solid #333;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            z-index: 10;
+            transition: 0.3s;
+            flex-shrink: 0; /* Impede que a seta seja esmagada */
+        }
+
+        .btn-carrossel:hover {
+            background-color: #8b5cf6;
+            color: #fff;
+            border-color: #8b5cf6;
+        }
+
+        /* Garante que o carrossel deslize suavemente quando clicar na seta */
+        .carrossel-datas {
+            scroll-behavior: smooth;
+        }

@@ -659,3 +659,284 @@
                 listaMeusAgendamentos.innerHTML += card;
             });
         }
+
+        // ==========================================
+        // LÓGICA DO MODAL DE NOTIFICAÇÕES (AGENDAMENTOS + ASSINATURAS)
+        // ==========================================
+        const modalNotificacoes = document.getElementById('notificacoes-modal');
+        const btnAbrirNotificacoes = document.getElementById('btn-abrir-notificacoes');
+        const listaNotificacoes = document.getElementById('lista-notificacoes');
+
+        window.fecharNotificacoes = function() {
+            if (modalNotificacoes) modalNotificacoes.style.display = 'none';
+        }
+
+        if (btnAbrirNotificacoes) {
+            btnAbrirNotificacoes.addEventListener('click', async (e) => {
+                e.preventDefault();
+
+                const telefoneLogado = document.getElementById('dropdown-telefone').innerText;
+
+                if (!telefoneLogado || telefoneLogado === "(11) 90000-0000") {
+                    mostrarToast("Faça login para ver suas notificações.", "aviso");
+                    document.getElementById('login-modal').style.display = 'flex';
+                    return;
+                }
+
+                // Fecha o menu suspenso e abre a tela
+                document.getElementById('dropdown-menu').classList.remove('show');
+                modalNotificacoes.style.display = 'flex';
+                listaNotificacoes.innerHTML = '<p style="text-align: center; color: var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Buscando avisos...</p>';
+
+                try {
+                    // 1. Busca os agendamentos do cliente
+                    const { data: agendamentos, error: errAgend } = await window.supabaseClient
+                        .from('agendamentos')
+                        .select('*')
+                        .eq('cliente_telefone', telefoneLogado);
+
+                    if (errAgend) throw errAgend;
+
+                    // 2. Busca APENAS o plano do cliente (removido o status_pagamento que causava o erro 400)
+                    const { data: cliente, error: errCliente } = await window.supabaseClient
+                        .from('clientes')
+                        .select('plano') 
+                        .eq('celular', telefoneLogado)
+                        .single();
+
+                    if (errCliente && errCliente.code !== 'PGRST116') throw errCliente; // Ignora erro se não achar
+
+                    // Chama a função passando as duas informações
+                    renderizarNotificacoesInteligentes(agendamentos || [], cliente || {});
+
+                } catch (err) {
+                    console.error("Erro ao carregar notificações:", err);
+                    listaNotificacoes.innerHTML = '<p style="text-align: center; color: #ff4d4d;">Erro ao carregar avisos.</p>';
+                }
+            });
+        }
+
+        function renderizarNotificacoesInteligentes(agendamentos, cliente) {
+            listaNotificacoes.innerHTML = '';
+            let notificacoesGeradas = [];
+            const agora = new Date();
+            
+            // Variáveis para a lógica de Upgrade
+            let cortesEsteMes = 0;
+            const mesAtual = agora.getMonth();
+            const anoAtual = agora.getFullYear();
+
+            // ==========================================
+            // 1. LÓGICA DE AGENDAMENTOS
+            // ==========================================
+            agendamentos.forEach(ag => {
+                const [ano, mes, dia] = ag.data_agendamento.split('-');
+                const [hora, minuto] = ag.horario.split(':');
+                const dataAgendamento = new Date(ano, mes - 1, dia, hora, minuto);
+
+                const diffTempo = dataAgendamento - agora;
+                const diffDias = Math.ceil(diffTempo / (1000 * 60 * 60 * 24));
+                const dataFormatada = ag.data_agendamento.split('-').reverse().join('/');
+
+                // Contagem para Upgrade (Cortes realizados no mês atual)
+                if (ag.status !== 'Cancelado' && dataAgendamento < agora && dataAgendamento.getMonth() === mesAtual && dataAgendamento.getFullYear() === anoAtual) {
+                    cortesEsteMes++;
+                }
+
+                if (ag.status === 'Cancelado') {
+                    notificacoesGeradas.push({
+                        icone: 'fa-calendar-xmark',
+                        cor: '#ff4d4d', 
+                        titulo: 'Aviso de Cancelamento',
+                        texto: 'Poxa, seu horário precisou ser remarcado. Clique aqui para escolher uma nova data.',
+                        acao: 'fecharNotificacoes(); iniciarAgendamento();'
+                    });
+                } 
+                else if (dataAgendamento >= agora) {
+                    notificacoesGeradas.push({
+                        icone: 'fa-circle-check',
+                        cor: 'var(--gold)',
+                        titulo: 'Reserva Confirmada',
+                        texto: `Seu horário com ${ag.profissional_nome} foi confirmado para dia ${dataFormatada} às ${ag.horario}.`
+                    });
+
+                    if (diffDias === 1) {
+                        notificacoesGeradas.push({
+                            icone: 'fa-clock',
+                            cor: '#8b5cf6',
+                            titulo: 'Lembrete: É Amanhã!',
+                            texto: 'Falta pouco! Seu agendamento é amanhã. Não se atrase!'
+                        });
+                    }
+                }
+            });
+
+            const passados = agendamentos.filter(ag => new Date(`${ag.data_agendamento}T00:00:00`) < agora && ag.status !== 'Cancelado');
+            const futuros = agendamentos.filter(ag => new Date(`${ag.data_agendamento}T00:00:00`) >= agora && ag.status !== 'Cancelado');
+
+            if (passados.length > 0 && futuros.length === 0) {
+                passados.sort((a, b) => new Date(b.data_agendamento) - new Date(a.data_agendamento));
+                const dataUltimo = new Date(passados[0].data_agendamento);
+                const diffDiasPassados = Math.floor((agora - dataUltimo) / (1000 * 60 * 60 * 24));
+                
+                if (diffDiasPassados >= 21) {
+                    notificacoesGeradas.push({
+                        icone: 'fa-scissors',
+                        cor: 'var(--whatsapp-green)',
+                        titulo: 'Hora de renovar o estilo!',
+                        texto: `Já faz ${diffDiasPassados} dias desde o seu último corte. Que tal agendar o próximo?`,
+                        acao: 'fecharNotificacoes(); iniciarAgendamento();'
+                    });
+                }
+            }
+
+            // ==========================================
+            // 2. LÓGICA DE ASSINATURAS E PLANOS
+            // ==========================================
+            
+            // A) Oferta de Upgrade (Cortou 3 vezes no mês e não é VIP)
+            if (cortesEsteMes >= 3 && cliente.plano !== 'Plano VIP') {
+                notificacoesGeradas.push({
+                    icone: 'fa-arrow-trend-up',
+                    cor: 'var(--gold)',
+                    titulo: 'Oferta Especial de Upgrade!',
+                    texto: `Você já cortou o cabelo ${cortesEsteMes} vezes este mês! Vale a pena conhecer o nosso Plano VIP.`,
+                    acao: 'fecharNotificacoes(); document.getElementById("btn-abrir-assinaturas").click();'
+                });
+            }
+
+            // B) Status da Assinatura (Se o cliente tem um plano ativo)
+            if (cliente && cliente.plano) {
+                notificacoesGeradas.push({
+                    icone: 'fa-gem',
+                    cor: '#25D366', // Verde sucesso
+                    titulo: 'Assinatura Ativa',
+                    texto: `Sua assinatura do ${cliente.plano} está ativa e garantindo seus benefícios exclusvos.`
+                });
+            }
+
+            // --- RENDERIZAÇÃO VISUAL NA TELA ---
+            if (notificacoesGeradas.length === 0) {
+                listaNotificacoes.innerHTML = '<p style="text-align: center; color: var(--text-muted); margin-top: 20px;">Você não tem novas notificações no momento.</p>';
+                return;
+            }
+
+            notificacoesGeradas.reverse().forEach(notif => {
+            // Agora o clique gera apenas o onclick, sem o style extra
+            const cliqueAcao = notif.acao ? `onclick='${notif.acao}'` : '';
+            const hoverEfeito = notif.acao ? `onmouseover="this.style.borderColor='${notif.cor}'" onmouseout="this.style.borderColor='#333'"` : '';
+            
+            // Define o tipo de cursor dinamicamente para mesclar no style principal
+            const tipoCursor = notif.acao ? 'pointer' : 'default';
+
+            const card = `
+                <div class="notificacao-card" ${cliqueAcao} ${hoverEfeito} style="background-color: #1a1a1a; padding: 18px; border-radius: 10px; border: 1px solid #333; display: flex; gap: 15px; align-items: flex-start; transition: 0.3s; cursor: ${tipoCursor};">
+                    <div style="background-color: #111; width: 42px; min-width: 42px; height: 42px; flex-shrink: 0; border-radius: 50%; display: flex; justify-content: center; align-items: center; color: ${notif.cor}; border: 1px solid ${notif.cor}; font-size: 1.1rem;">
+                        <i class="fa-solid ${notif.icone}"></i>
+                    </div>
+                    <div>
+                        <h4 style="margin: 0 0 5px 0; color: #fff; font-size: 1rem;">${notif.titulo}</h4>
+                        <p style="margin: 0; color: var(--text-muted); font-size: 0.85rem; line-height: 1.5;">${notif.texto.replace('exclusvos', 'exclusivos')}</p>
+                    </div>
+                </div>
+            `;
+            listaNotificacoes.innerHTML += card;
+        });
+    }
+
+            // ==========================================
+            // FUNÇÃO PARA COPIAR O TELEFONE (FALE CONOSCO)
+            // ==========================================
+            window.copiarTelefone = function() {
+                // 1. Pega o elemento que contém o número na tela
+                const elementoTelefone = document.getElementById('numero-telefone');
+                
+                if (elementoTelefone) {
+                    // 2. Extrai apenas o texto (o número em si)
+                    const numero = elementoTelefone.innerText;
+                    
+                    // 3. Usa a API do navegador para copiar para a área de transferência
+                    navigator.clipboard.writeText(numero).then(() => {
+                        // Se copiar com sucesso, mostra o Toast verde
+                        if (typeof mostrarToast === 'function') {
+                            mostrarToast('Número copiado para a área de transferência!');
+                        } else {
+                            alert('Número copiado: ' + numero);
+                        }
+                    }).catch(err => {
+                        // Se der erro (ex: navegador bloqueou), avisa o usuário
+                        console.error('Erro ao copiar telefone:', err);
+                        if (typeof mostrarToast === 'function') {
+                            mostrarToast('Não foi possível copiar o número.', 'aviso');
+                        }
+                    });
+                }
+            }
+
+            // ==========================================
+            // CARREGAR CONFIGURAÇÕES GERAIS (ÁREA DO CLIENTE)
+            // ==========================================
+            
+            // 1. Variável global que guarda o endereço em tempo real
+            let variavelEnderecoRota = "Rua Pan, 37, São Caetano do Sul"; 
+
+            // 2. Função acionada pelo botão "Traçar Rota"
+            window.abrirRota = function() {
+                // O encodeURIComponent transforma espaços e vírgulas em formato de link seguro (%20, etc)
+                const enderecoCodificado = encodeURIComponent(variavelEnderecoRota);
+                // Abre o Google Maps traçando a rota direto para a variável gravada
+                window.open(`https://www.google.com/maps/dir/?api=1&destination=${enderecoCodificado}`, '_blank');
+            }
+
+            // 3. Função que busca os dados da Gestão no Banco de Dados
+            async function carregarConfiguracoesCliente() {
+                try {
+                    const { data, error } = await window.supabaseClient
+                        .from('configuracoes')
+                        .select('*')
+                        .eq('id', 1)
+                        .single();
+
+                    if (data && !error) {
+                        // Atualiza o Nome da Barbearia
+                        const tituloHero = document.getElementById('nome-barbearia-hero');
+                        if (tituloHero && data.nome_barbearia) {
+                            tituloHero.innerText = data.nome_barbearia;
+                            document.title = data.nome_barbearia; // Muda o título da aba do navegador também
+                        }
+
+                        // Atualiza o Telefone e os links de Ligar/WhatsApp
+                        const numTelefone = document.getElementById('numero-telefone');
+                        const linkLigar = document.getElementById('link-ligar');
+                        const linkWhats = document.getElementById('link-whatsapp');
+
+                        if (numTelefone && data.telefone) {
+                            numTelefone.innerText = data.telefone;
+                            
+                            // Limpa o telefone deixando só os números
+                            let telLimpo = data.telefone.replace(/\D/g, '');
+                            // Adiciona o DDI (55) do Brasil caso não tenha
+                            if (!telLimpo.startsWith('55') && telLimpo.length >= 10) {
+                                telLimpo = '55' + telLimpo;
+                            }
+
+                            if (linkLigar) linkLigar.href = `tel:+${telLimpo}`;
+                            if (linkWhats) linkWhats.href = `https://wa.me/${telLimpo}?text=Olá!%20Gostaria%20de%20marcar%20um%20horário.`;
+                        }
+
+                        // Atualiza o Texto do Endereço e a Variável da Rota
+                        const endTexto = document.getElementById('endereco-texto');
+                        if (endTexto && data.endereco) {
+                            endTexto.innerText = data.endereco; // Muda o texto na tela
+                            variavelEnderecoRota = data.endereco; // Atualiza a variável do Maps secretamente
+                        }
+                    }
+                } catch (err) {
+                    console.error("Erro ao puxar configurações da barbearia:", err);
+                }
+            }
+
+            // 4. Executa a busca assim que o site inicia
+            document.addEventListener('DOMContentLoaded', () => {
+                carregarConfiguracoesCliente();
+            });

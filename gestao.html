@@ -53,11 +53,15 @@
         <div id="aba-agenda" class="aba-conteudo active">
             <div class="aba-header">
                 <h2>Gestão de Agenda</h2>
-                <div class="aba-filtros">
+                <div class="aba-filtros" style="align-items: center;">
                     <input type="date" class="dash-input" id="filtro-data-agenda" onchange="carregarAgendaDoDia()">
                     <select class="dash-input" id="filtro-prof-agenda" onchange="carregarAgendaDoDia()">
                         <option value="todos">Todos os barbeiros</option>
                     </select>
+                    
+                    <button id="btn-bloquear-dia" class="btn-excluir-ac" style="display: none; padding: 10px 15px;" onclick="bloquearDiaSelecionado()">
+                        <i class="fa-solid fa-lock"></i> Bloquear Dia
+                    </button>
                 </div>
             </div>
             
@@ -79,20 +83,133 @@
         </div>
 
         <div id="aba-acessos" class="aba-conteudo">
-            <div class="aba-header">
-                <h2>Controle de Acessos</h2>
+            <div class="aba-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-user-lock"></i> Gestão de Acessos
+                </h2>
+                <button class="btn-gold" onclick="abrirModalAcesso()" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Inter', sans-serif;">
+                    + Novo Acesso
+                </button>
             </div>
+            
             <div class="aba-body">
-                <p style="color: var(--text-muted);">Módulo de criação de logins e níveis de permissão em construção.</p>
+                <div class="acessos-header-row">
+                    <div>Nome</div>
+                    <div>Login (Usuário)</div>
+                    <div>Nível de Acesso</div>
+                    <div>Status</div>
+                    <div style="text-align: right;">Ações</div>
+                </div>
+                
+                <div id="lista-acessos">
+                    <p style="text-align: center; color: var(--text-muted); padding: 20px;"><i class="fa-solid fa-spinner fa-spin"></i> Carregando acessos...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-acesso" class="modal-overlay" style="display: none; z-index: 9999;">
+            <div class="login-box card" style="background-color: #1a1a1a; border: 1px solid #333; max-width: 450px; position: relative;">
+                
+                <button onclick="fecharModalAcesso()" style="position: absolute; right: 20px; top: 20px; background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;">×</button>
+                
+                <h2 id="titulo-modal-acesso" style="margin-bottom: 25px; color: #fff; font-family: 'Inter', sans-serif; font-size: 1.5rem;">Novo Acesso</h2>
+                
+                <input type="hidden" id="acesso-id"> 
+                
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label>Profissional da Equipe (Vínculo)</label>
+                    <select id="acesso-nome" style="width: 100%; box-sizing: border-box; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #121212; color: #fff; font-size: 1.1rem; outline: none; cursor: pointer;">
+                        <option value="">Carregando profissionais...</option>
+                    </select>
+                    <small style="color: var(--text-muted); font-size: 0.8rem; margin-top: 5px;">Se o profissional não estiver na lista, crie-o primeiro na aba Equipe.</small>
+                </div>
+                
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label>Login (Usuário)</label>
+                    <input type="text" id="acesso-login" placeholder="Ex: guapo" style="background-color: #121212;">
+                </div>
+                
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label>Senha</label>
+                    <input type="password" id="acesso-senha" placeholder="Digite a senha" style="background-color: #121212;">
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 25px;">
+                    <div class="input-group" style="flex: 1;">
+                        <label>Nível</label>
+                        <select id="acesso-nivel" style="width: 100%; box-sizing: border-box; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #121212; color: #fff; font-size: 1.1rem; outline: none; cursor: pointer;">
+                            <option value="ADMINISTRADOR">Administrador</option>
+                            <option value="OPERADOR">Operador</option>
+                        </select>
+                    </div>
+                    <div class="input-group" style="flex: 1;">
+                        <label>Status</label>
+                        <select id="acesso-status" style="width: 100%; box-sizing: border-box; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #121212; color: #fff; font-size: 1.1rem; outline: none; cursor: pointer;">
+                            <option value="ATIVO">Ativo</option>
+                            <option value="INATIVO">Inativo</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button id="btn-salvar-acesso" onclick="salvarAcesso()" class="btn-gold" style="width: 100%; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; border: none;">
+                    💾 Salvar Acesso
+                </button>
             </div>
         </div>
 
         <div id="aba-assinaturas" class="aba-conteudo">
-            <div class="aba-header">
-                <h2>Gestão de Assinaturas</h2>
+            <div class="aba-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h2 style="display: flex; align-items: center; gap: 10px;">
+                    <i class="fa-solid fa-gem"></i> Gestão de Assinaturas
+                </h2>
+                <button class="btn-gold" onclick="abrirModalAssinatura()" style="padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-family: 'Inter', sans-serif;">
+                    + Novo Plano
+                </button>
             </div>
+            
             <div class="aba-body">
-                <p style="color: var(--text-muted);">Módulo de controle de assinantes em construção.</p>
+                <div id="lista-assinaturas-admin" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; margin-top: 10px;">
+                    <p style="text-align: center; color: var(--text-muted); grid-column: 1/-1;"><i class="fa-solid fa-spinner fa-spin"></i> Carregando planos...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="modal-assinatura" class="modal-overlay" style="display: none; z-index: 9999;">
+            <div class="login-box card" style="background-color: #1a1a1a; border: 1px solid #333; max-width: 500px; position: relative;">
+                
+                <button onclick="fecharModalAssinatura()" style="position: absolute; right: 20px; top: 20px; background: none; border: none; color: #fff; font-size: 1.2rem; cursor: pointer;">×</button>
+                
+                <h2 id="titulo-modal-assinatura" style="margin-bottom: 25px; color: #fff; font-family: 'Inter', sans-serif; font-size: 1.5rem;">Novo Plano</h2>
+                
+                <input type="hidden" id="ass-id"> 
+                
+                <div class="input-group" style="margin-bottom: 15px;">
+                    <label>Nome do Plano</label>
+                    <input type="text" id="ass-nome" placeholder="Ex: Plano VIP" style="background-color: #121212;">
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-bottom: 15px;">
+                    <div class="input-group" style="flex: 1;">
+                        <label>Preço Mensal (R$)</label>
+                        <input type="number" id="ass-preco" placeholder="Ex: 99.90" step="0.01" style="background-color: #121212;">
+                    </div>
+                    <div class="input-group" style="flex: 1;">
+                        <label>Destaque (Mais Popular)?</label>
+                        <select id="ass-destaque" style="width: 100%; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #121212; color: #fff; font-size: 1.1rem; outline: none;">
+                            <option value="false">Não</option>
+                            <option value="true">Sim (Fita Dourada)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 25px;">
+                    <label>Benefícios (Separe cada benefício por linha / tecla Enter)</label>
+                    <textarea id="ass-beneficios" rows="5" placeholder="Cortes ilimitados&#10;Sobrancelha inclusa&#10;1 Cerveja grátis" style="width: 100%; box-sizing: border-box; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); background-color: #121212; color: #fff; font-size: 1rem; outline: none; font-family: 'Inter', sans-serif; resize: vertical;"></textarea>
+                </div>
+                
+                <button id="btn-salvar-assinatura" onclick="salvarAssinatura()" class="btn-gold" style="width: 100%; padding: 15px; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer; border: none;">
+                    <i class="fa-solid fa-floppy-disk"></i> Salvar Plano
+                </button>
             </div>
         </div>
 
@@ -238,6 +355,25 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- MODAL DE CONFIRMAÇÃO CUSTOMIZADO -->
+    <div id="modal-confirmacao" class="modal-overlay" style="display: none; z-index: 10000;">
+        <div class="login-box card" style="background-color: #1a1a1a; border: 1px solid #333; max-width: 400px; text-align: center; padding: 30px;">
+            
+            <div id="icone-confirmacao" style="font-size: 3.5rem; margin-bottom: 15px;">
+                <i class="fa-solid fa-circle-exclamation"></i>
+            </div>
+            
+            <h2 id="titulo-confirmacao" style="margin-bottom: 10px; color: #fff; font-family: 'Inter', sans-serif; font-size: 1.5rem;">Atenção</h2>
+            
+            <p id="texto-confirmacao" style="color: var(--text-muted); margin-bottom: 25px; font-size: 1rem; line-height: 1.5;"></p>
+            
+            <div style="display: flex; gap: 15px;">
+                <button id="btn-cancelar-confirmacao" style="flex: 1; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; background: transparent; border: 1px solid #555; color: #fff; transition: 0.3s;">Cancelar</button>
+                <button id="btn-ok-confirmacao" style="flex: 1; padding: 12px; border-radius: 8px; cursor: pointer; border: none; font-weight: bold; transition: 0.3s;">Confirmar</button>
+            </div>
+        </div>
     </div>
 
     <div id="toast-container" class="toast-container"></div>

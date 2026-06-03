@@ -202,25 +202,82 @@
         }
 
         function configurarInputData() {
-            const inputData = document.getElementById('input-data-agendamento');
-            if(!inputData) return;
+            const carrossel = document.getElementById('carrossel-datas');
+            const inputOculto = document.getElementById('input-data-agendamento');
+            if(!carrossel || !inputOculto) return;
+            
+            carrossel.innerHTML = '';
+            
+            const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+            const meses = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
             
             const hoje = new Date();
-            const limite = new Date();
-            limite.setDate(hoje.getDate() + 10); // Trava os 10 dias
             
-            const stringHoje = hoje.toISOString().split('T')[0];
-            const stringLimite = limite.toISOString().split('T')[0];
-            
-            inputData.min = stringHoje;
-            inputData.max = stringLimite;
-            
-            // Se ainda não tiver data selecionada, preenche com hoje
-            if(!inputData.value) {
-                inputData.value = stringHoje; 
+            // Loop para gerar EXATAMENTE 11 dias a partir de hoje
+            for(let i = 0; i < 11; i++) {
+                const dataAtual = new Date(hoje);
+                dataAtual.setDate(hoje.getDate() + i);
+                
+                const ano = dataAtual.getFullYear();
+                const mesPad = String(dataAtual.getMonth() + 1).padStart(2, '0');
+                const diaPad = String(dataAtual.getDate()).padStart(2, '0');
+                const dataString = `${ano}-${mesPad}-${diaPad}`; // Formato que o banco de dados e o sistema entendem (YYYY-MM-DD)
+                
+                const nomeDia = diasSemana[dataAtual.getDay()];
+                const diaNumero = dataAtual.getDate();
+                const nomeMes = meses[dataAtual.getMonth()];
+                const anoCurto = String(ano).slice(-2);
+                
+                // O primeiro card (Hoje) já vem selecionado
+                const isSelected = i === 0 ? 'selected' : '';
+                if(i === 0) inputOculto.value = dataString; 
+                
+                const card = `
+                    <div class="data-card ${isSelected}" id="card-data-${dataString}" onclick="selecionarDataAgendamento('${dataString}')">
+                        <span class="data-card-dia-semana">${nomeDia}</span>
+                        <span class="data-card-numero">${diaNumero}</span>
+                        <span class="data-card-mes">${nomeMes}/${anoCurto}</span>
+                    </div>
+                `;
+                carrossel.innerHTML += card;
             }
             
+            // Carrega os horários da primeira data (Hoje) automaticamente
             carregarHorariosDisponiveis();
+        }
+
+        // Função chamada quando o cliente clica em um dia diferente no carrossel
+        window.selecionarDataAgendamento = function(dataString) {
+            // Remove a classe 'selected' de todos os cards
+            const cards = document.querySelectorAll('.data-card');
+            cards.forEach(card => card.classList.remove('selected'));
+            
+            // Adiciona a classe 'selected' apenas no card clicado
+            document.getElementById(`card-data-${dataString}`).classList.add('selected');
+            
+            // Atualiza o input oculto e dispara a busca de horários livres daquele dia
+            const inputOculto = document.getElementById('input-data-agendamento');
+            if(inputOculto) {
+                inputOculto.value = dataString;
+                carregarHorariosDisponiveis();
+            }
+        }
+
+        // Função chamada quando o cliente clica em um dia diferente no carrossel
+        window.selecionarDataAgendamento = function(dataString) {
+            // Remove a classe 'selected' de todos os cards
+            const cards = document.querySelectorAll('.data-card');
+            cards.forEach(card => card.classList.remove('selected'));
+            
+            // Adiciona a classe 'selected' apenas no card clicado
+            document.getElementById(`card-data-${dataString}`).classList.add('selected');
+            
+            // Atualiza o input oculto e dispara a busca de horários livres daquele dia
+            const inputOculto = document.getElementById('input-data-agendamento');
+            if(inputOculto) {
+                inputOculto.value = dataString;
+                carregarHorariosDisponiveis();
+            }
         }
 
         // ==========================================
@@ -253,22 +310,60 @@
                 // 2. Puxar os agendamentos já feitos para ESSE PROFISSIONAL e NESSA DATA
                 const { data: agendamentos, error } = await window.supabaseClient
                     .from('agendamentos')
-                    .select('horario')
+                    .select('horario, status') // <--- AGORA ELE PUXA O STATUS TAMBÉM
                     .eq('data_agendamento', dataSelecionada)
                     .eq('profissional_id', reservaAtual.profissionalId);
 
                 if (error) throw error;
 
+                // --- VERIFICA SE O PROFISSIONAL BLOQUEOU O DIA ---
+                const diaBloqueado = agendamentos.some(ag => ag.status === 'BLOQUEIO');
+                if (diaBloqueado) {
+                    lista.innerHTML = '<p style="text-align: center; color: #ff4d4d; font-weight: bold; grid-column: 1/-1;">Profissional indisponível nesta data (Folga/Feriado) 😔<br><span style="font-size: 0.9rem; font-weight: normal; color: var(--text-muted);">Por favor, selecione outro dia no calendário acima.</span></p>';
+                    return; // Cancela a busca de horários livres
+                }
+                // -------------------------------------------------
+
                 // Cria uma lista apenas com os textos dos horários ocupados
                 const horariosOcupados = agendamentos.map(ag => ag.horario);
 
-                // 3. A MÁGICA: Filtra os horários removendo tudo o que está ocupado
-                const horariosLivres = horariosMaster.filter(hora => !horariosOcupados.includes(hora)).sort();
+                // 3. A MÁGICA 1: Filtra os horários removendo tudo o que está ocupado
+                let horariosLivres = horariosMaster.filter(hora => !horariosOcupados.includes(hora)).sort();
+
+                // -----------------------------------------------------------
+                // A MÁGICA 2: TRAVA DE HORÁRIOS QUE JÁ PASSARAM NO DIA DE HOJE
+                // -----------------------------------------------------------
+                const agora = new Date();
+                const ano = agora.getFullYear();
+                const mes = String(agora.getMonth() + 1).padStart(2, '0');
+                const dia = String(agora.getDate()).padStart(2, '0');
+                const dataHojeLocal = `${ano}-${mes}-${dia}`;
+
+                // Se o cliente escolheu a data de hoje, filtramos as horas antigas
+                if (dataSelecionada === dataHojeLocal) {
+                    const horaAtual = agora.getHours();
+                    const minutoAtual = agora.getMinutes();
+
+                    horariosLivres = horariosLivres.filter(horaStr => {
+                        const [hStr, mStr] = horaStr.split(':');
+                        const h = parseInt(hStr, 10);
+                        const m = parseInt(mStr, 10);
+
+                        // Se a hora da grade for maior que a hora atual, mantém.
+                        if (h > horaAtual) return true;
+                        // Se for a mesma hora, verifica se o minuto da grade é maior que o atual.
+                        if (h === horaAtual && m > minutoAtual) return true;
+                        
+                        // Se já passou, oculta (retorna falso).
+                        return false; 
+                    });
+                }
+                // -----------------------------------------------------------
 
                 lista.innerHTML = '';
                 
                 if (horariosLivres.length === 0) {
-                    lista.innerHTML = '<p style="text-align: center; color: #ff4d4d; font-weight: bold; grid-column: 1/-1;">Agenda lotada para este dia! 😔<br><span style="font-size: 0.9rem; font-weight: normal; color: var(--text-muted);">Por favor, selecione outra data acima.</span></p>';
+                    lista.innerHTML = '<p style="text-align: center; color: #ff4d4d; font-weight: bold; grid-column: 1/-1;">Nenhum horário disponível para esta data! 😔<br><span style="font-size: 0.9rem; font-weight: normal; color: var(--text-muted);">Por favor, selecione outro dia no calendário acima.</span></p>';
                     return;
                 }
 
@@ -520,5 +615,18 @@
                     btnFinalizar.innerHTML = textoOriginal;
                     btnFinalizar.disabled = false;
                 }
+            }
+        }
+
+        // ==========================================
+        // FUNÇÃO PARA ROLAR O CARROSSEL NAS SETAS
+        // ==========================================
+        window.rolarCarrossel = function(direcao) {
+            const carrossel = document.getElementById('carrossel-datas');
+            if (carrossel) {
+                // O valor 250px é a distância que ele vai pular a cada clique. 
+                // Se o valor for negativo (-1), ele rola pra esquerda. Se for positivo (1), rola pra direita.
+                const distancia = 250 * direcao; 
+                carrossel.scrollBy({ left: distancia, behavior: 'smooth' });
             }
         }
